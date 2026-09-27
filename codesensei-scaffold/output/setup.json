@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "generatedBy": "setup-agent",
+    "generatedAt": "2025-07-15T12:00:00Z",
+    "repoPath": "codesensei-scaffold",
+    "status": "ready"
+  },
+  "runtimes": [
+    {
+      "name": "browser",
+      "version": "any (ES2015+ / modern Chrome, Firefox, Safari, Edge)",
+      "source": "index.html — uses vanilla JS with no transpilation; no package.json or .nvmrc found"
+    },
+    {
+      "name": "python3",
+      "version": "any (optional — only needed to serve via HTTP)",
+      "source": "README.md line 19 — suggested via `python3 -m http.server 8000`"
+    }
+  ],
+  "secrets": [],
+  "checklist": [
+    {
+      "id": "open-browser",
+      "label": "Open <code>index.html</code> directly in a modern browser",
+      "command": "open codesensei-scaffold/index.html",
+      "completedByDefault": false,
+      "failurePoint": "Some browsers restrict fetch() under the file:// protocol — use the HTTP server option if panels fail to load JSON"
+    },
+    {
+      "id": "verify-nav",
+      "label": "Click all five nav tabs (Overview, Architecture, Setup, Ask, First Task) and confirm each panel renders",
+      "command": null,
+      "completedByDefault": false,
+      "failurePoint": "If JS is disabled or file encoding is not UTF-8 the nav will be unresponsive — enable JS and ensure UTF-8 save"
+    },
+    {
+      "id": "verify-chat",
+      "label": "In the Ask tab, type <code>how are expenses categorized?</code> and confirm a response appears",
+      "command": null,
+      "completedByDefault": false,
+      "failurePoint": "No response means the sendChat() function is blocked — open browser DevTools console (F12) to see the error"
+    },
+    {
+      "id": "optional-server",
+      "label": "Optional: serve via HTTP to enable full fetch() support: <code>python3 -m http.server 8000</code> then open http://localhost:8000",
+      "command": "python3 -m http.server 8000",
+      "completedByDefault": false,
+      "failurePoint": "Port 8000 already in use — change the port number: `python3 -m http.server 8080`"
+    }
+  ],
+  "failurePoints": [
+    {
+      "step": "open-browser",
+      "description": "fetch() calls are blocked under the file:// protocol in some browsers (Chrome is strictest), so output/*.json files may not load.",
+      "fix": "Use the optional HTTP server: `python3 -m http.server 8000` from the codesensei-scaffold/ directory, then open http://localhost:8000"
+    },
+    {
+      "step": "optional-server",
+      "description": "Port 8000 already bound by another process.",
+      "fix": "Try an alternate port: `python3 -m http.server 8080` or `python3 -m http.server 3000`"
+    }
+  ],
+  "script": "#!/usr/bin/env bash\nset -e\n\n# CodeSensei — zero-dependency static HTML prototype\n# No package manager, no build step, no environment variables required.\n\ncd \"$(dirname \"$0\")\"\n\necho \"CodeSensei setup\"\necho \"================\"\necho \"No dependencies to install.\"\necho \"\"\n\nif command -v python3 &>/dev/null; then\n  PORT=8000\n  # Try fallback ports if 8000 is busy\n  for p in 8000 8080 3000 4000; do\n    if ! lsof -Pi \":$p\" -sTCP:LISTEN -t &>/dev/null 2>&1; then\n      PORT=$p\n      break\n    fi\n  done\n  echo \"Starting HTTP server on port $PORT...\"\n  echo \"Open: http://localhost:$PORT\"\n  python3 -m http.server \"$PORT\"\nelse\n  echo \"Python3 not found.\"\n  echo \"Open index.html directly in your browser, or install Python 3 for HTTP server support.\"\nfi\n"
+}

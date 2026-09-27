@@ -1,0 +1,55 @@
+{
+  "_meta": {
+    "generatedBy": "architecture-mapper",
+    "generatedAt": "2025-07-15T12:00:00Z",
+    "repoPath": "codesensei-scaffold",
+    "status": "ready"
+  },
+  "dependencyFlow": "index.html (dashboard UI — sole entry point)\n├─ agents/  (subagent prompt specifications)\n│  ├─ architecture-mapper.md\n│  ├─ setup-agent.md\n│  ├─ codebase-qa-agent.md\n│  └─ first-task-finder.md\n├─ output/  (agent-to-dashboard JSON contracts)\n│  ├─ architecture.json  ──▶ Architecture tab\n│  ├─ setup.json         ──▶ Setup tab\n│  ├─ qa-context.json    ──▶ Ask tab\n│  └─ first-task.json    ──▶ First Task tab\n├─ .bob/  (IBM Bob mode-specific rules)\n│  ├─ rules-agent/AGENTS.md\n│  ├─ rules-ask/AGENTS.md\n│  └─ rules-plan/AGENTS.md\n└─ Documentation\n   ├─ README.md\n   ├─ AGENTS.md\n   └─ SUBMISSION.md",
+  "topFiles": [
+    {
+      "path": "index.html",
+      "reason": "The entire application — all CSS, JS, and HTML live here; five nav panels, sample-data fallback, and the fetch() calls that load agent output"
+    },
+    {
+      "path": "AGENTS.md",
+      "reason": "Defines the agent-to-dashboard contract: _meta.status semantics, output JSON shapes, and the critical file-path scoping rule"
+    },
+    {
+      "path": "agents/architecture-mapper.md",
+      "reason": "Canonical example of how a subagent prompt spec is structured — the triple-backtick block is passed verbatim to Bob"
+    },
+    {
+      "path": "output/architecture.json",
+      "reason": "Reference contract for the Architecture tab — shows the exact fields the dashboard will consume"
+    },
+    {
+      "path": "README.md",
+      "reason": "Problem statement, architecture diagram (target build), and what is real vs. stubbed — essential context before touching any code"
+    }
+  ],
+  "summary": "CodeSensei is an AI developer-onboarding copilot. The entire project is a single static HTML file (index.html) that renders a five-panel dashboard: Overview, Architecture, Setup, Ask, and First Task. Each panel is meant to display results from one of four IBM Bob 2.0 subagents that analyse a target repository in parallel. The subagent prompt specs live in /agents/*.md; they are instructions, not runnable scripts. The four /output/*.json files are the handshake layer — agents write structured JSON there, and the dashboard fetches and renders it. The _meta.status field ('sample' / 'pending' / 'ready') controls which state the dashboard shows. There is no build step, no server, and no external dependencies. Everything except the live agent calls is contained in a single HTML file.",
+  "mermaidDiagram": "flowchart TD\n  A[\"index.html (Dashboard)\"] -->|fetches at load| B[\"output/architecture.json\"]\n  A -->|fetches at load| C[\"output/setup.json\"]\n  A -->|fetches at load| D[\"output/qa-context.json\"]\n  A -->|fetches at load| E[\"output/first-task.json\"]\n  F[\"IBM Bob 2.0 Agent Mode\"] -->|parallel subagent| G[\"Architecture Mapper\"]\n  F -->|parallel subagent| H[\"Setup Agent\"]\n  F -->|parallel subagent| I[\"Codebase Q&A Agent\"]\n  F -->|parallel subagent| J[\"First-Task Finder\"]\n  G -->|writes| B\n  H -->|writes| C\n  I -->|writes| D\n  J -->|writes| E\n  G -->|prompted by| K[\"agents/architecture-mapper.md\"]\n  H -->|prompted by| L[\"agents/setup-agent.md\"]\n  I -->|prompted by| M[\"agents/codebase-qa-agent.md\"]\n  J -->|prompted by| N[\"agents/first-task-finder.md\"]",
+  "modules": [
+    {
+      "name": "index.html",
+      "purpose": "Single-file static dashboard: all CSS (custom properties), JS (nav, chat, sample answers), and HTML in one file — no build step"
+    },
+    {
+      "name": "agents/",
+      "purpose": "Four Bob subagent prompt specs — the triple-backtick block in each is passed verbatim as the subagent task description"
+    },
+    {
+      "name": "output/",
+      "purpose": "Four JSON contract files — agents write results here; dashboard fetches them; _meta.status controls rendering state"
+    },
+    {
+      "name": ".bob/",
+      "purpose": "IBM Bob mode-specific AGENTS.md files for agent, ask, and plan modes — non-obvious project rules for AI assistants"
+    },
+    {
+      "name": "Documentation",
+      "purpose": "README.md (overview + target architecture), AGENTS.md (agent contract), SUBMISSION.md (lablab.ai copy)"
+    }
+  ]
+}

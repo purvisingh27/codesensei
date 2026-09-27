@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "generatedBy": "first-task-finder",
+    "generatedAt": "2025-07-15T15:00:00Z",
+    "repoPath": "codesensei-scaffold",
+    "status": "ready",
+    "developerLevel": "junior",
+    "source": "code-analysis"
+  },
+  "primary": {
+    "id": "replace-stale-ask-seed-message",
+    "title": "Replace the fictional expense-tracker seed message in the Ask chat log",
+    "badges": ["Junior-friendly", "~1 hr"],
+    "description": "The Ask panel opens with a hardcoded exchange about JWT auth middleware and an expense-tracker service (index.html:131-134). This fiction persists even after liveAnswers loads, because the seed message is static HTML that loadOutputs() never touches. A new developer reading the dashboard gets a misleading first impression of what the Q&A agent actually knows. The fix is to replace the hardcoded .msg.user / .msg.bot pair with a real exchange drawn from qa-context.json's knownAnswers — for example, the 'How does the dashboard load real data?' answer. This is a two-part change: update the static HTML seed (lines 131-134) and add a short post-load step in loadOutputs() to optionally replace it with the first knownAnswer when qa-context.json is ready. Touches only index.html.",
+    "files": ["index.html"],
+    "estimateHours": 1,
+    "difficulty": "junior-friendly"
+  },
+  "runnerUps": [
+    {
+      "id": "fix-ask-placeholder-offline",
+      "title": "Fix the Ask panel input placeholder for offline / file:// usage",
+      "badges": ["~30 min"],
+      "files": ["index.html"],
+      "estimateHours": 0.5
+    },
+    {
+      "id": "fix-submission-nextjs-tag",
+      "title": "Remove the incorrect 'Next.js' tag from SUBMISSION.md and fill in the Team section of README.md",
+      "badges": ["~20 min"],
+      "files": ["SUBMISSION.md", "README.md"],
+      "estimateHours": 0.3
+    }
+  ]
+}

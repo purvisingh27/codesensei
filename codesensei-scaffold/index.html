@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CodeSensei</title>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #171a23; --panel2: #1e2230; --border: #2a2f3f;
+    --text: #e8eaf0; --muted: #8a90a3; --accent: #6c8cff; --accent2: #45d19e;
+    --warn: #f0b429; --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:var(--font); }
+  header { padding:20px 28px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  header h1 { margin:0; font-size:20px; }
+  header h1 span { color:var(--accent); }
+  header .tag { color:var(--muted); font-size:13px; }
+  .layout { display:grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 65px); }
+  nav { border-right:1px solid var(--border); padding:16px 10px; }
+  nav button { display:block; width:100%; text-align:left; background:none; border:none; color:var(--muted);
+    padding:10px 12px; border-radius:8px; cursor:pointer; font-size:14px; margin-bottom:4px; }
+  nav button.active { background:var(--panel2); color:var(--text); }
+  nav button:hover { color:var(--text); }
+  main { padding:24px 28px; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:16px; }
+  .card h3 { margin-top:0; font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .flow { font-family:monospace; font-size:13px; line-height:1.6; color:var(--accent2); white-space:pre; overflow-x:auto; }
+  .filelist li { margin-bottom:6px; font-size:14px; }
+  .filelist code { color:var(--accent); }
+  .checklist li { margin-bottom:10px; font-size:14px; }
+  .checklist input { margin-right:8px; }
+  .chat { display:flex; flex-direction:column; gap:12px; min-height:220px; }
+  .msg { max-width:75%; padding:10px 14px; border-radius:10px; font-size:14px; line-height:1.4; }
+  .msg.user { align-self:flex-end; background:var(--accent); color:#fff; }
+  .msg.bot { align-self:flex-start; background:var(--panel2); }
+  .cite { display:block; margin-top:6px; font-size:12px; color:var(--muted); font-family:monospace; }
+  .chatinput { display:flex; gap:8px; margin-top:12px; }
+  .chatinput input { flex:1; background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); }
+  .chatinput button { background:var(--accent); border:none; color:#fff; padding:10px 16px; border-radius:8px; cursor:pointer; }
+  .task { border-left:3px solid var(--accent2); padding-left:14px; margin-bottom:14px; }
+  .task h4 { margin:0 0 4px 0; }
+  .badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:var(--panel2); color:var(--muted); margin-right:6px; }
+  .stat-row { display:flex; gap:16px; margin-bottom:16px; }
+  .stat { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+  .stat .num { font-size:26px; font-weight:700; color:var(--accent2); }
+  .stat .label { font-size:12px; color:var(--muted); margin-top:4px; }
+  .skeleton { opacity:.45; animation:pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:.45} 50%{opacity:.2} }
+  .pipeline { display:flex; flex-direction:column; align-items:center; gap:0; }
+  .pipe-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .pipe-node { background:var(--panel2); border:1px solid var(--border); border-radius:8px;
+    padding:6px 12px; font-size:12px; color:var(--text); white-space:nowrap; }
+  .pipe-node.top   { background:var(--accent); color:#fff; font-weight:600; border-color:var(--accent); }
+  .pipe-node.bot   { background:var(--accent2); color:#0f1117; font-weight:600; border-color:var(--accent2); }
+  .pipe-node.file  { font-family:monospace; font-size:11px; color:var(--accent); border-color:var(--accent); background:var(--panel); }
+  .pipe-arrow { font-size:16px; color:var(--muted); line-height:1; padding:4px 0; }
+  #status-badge { font-size:12px; text-align:right; line-height:1.5; }
+  #status-badge .dot { font-size:10px; }
+  #status-badge .dot.live { color:var(--accent2); }
+  #status-badge .dot.demo { color:var(--warn); }
+  #status-badge .ts { display:block; font-size:11px; color:var(--muted); margin-top:1px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Code<span>Sensei</span></h1>
+  <div class="tag">Onboarding copilot • powered by IBM Bob 2.0 Agent Mode</div>
+  <div id="status-badge">
+    <span class="dot demo">●</span> <span id="status-label">DEMO FALLBACK</span>
+    <span class="ts" id="status-ts"></span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav>
+    <button class="navbtn active" data-panel="overview">Overview</button>
+    <button class="navbtn" data-panel="architecture">Architecture</button>
+    <button class="navbtn" data-panel="setup">Setup</button>
+    <button class="navbtn" data-panel="ask">Ask</button>
+    <button class="navbtn" data-panel="task">First Task</button>
+  </nav>
+
+  <main>
+    <div class="panel active" id="overview">
+      <div class="stat-row">
+        <div class="stat"><div class="num">2 min</div><div class="label">to first task assigned</div></div>
+        <div class="stat"><div class="num">4</div><div class="label">subagents run in parallel</div></div>
+        <div class="stat"><div class="num">35 days</div><div class="label">typical time-to-productivity today</div></div>
+      </div>
+      <div class="card">
+        <h3>What just happened</h3>
+        <p style="font-size:14px;line-height:1.6;">Bob 2.0's Agent mode ran four subagents in parallel over this repository: an <b>Architecture Mapper</b>, a <b>Setup Agent</b>, a <b>Codebase Q&amp;A Agent</b>, and a <b>First-Task Finder</b>. Explore each tab on the left to see what each one produced — this is the entire first-day onboarding experience, generated automatically.</p>
+      </div>
+      <div class="card">
+        <h3>4-Agent Pipeline</h3>
+        <div class="pipeline">
+          <div class="pipe-row"><span class="pipe-node top">IBM Bob 2.0 Agent Mode</span></div>
+          <div class="pipe-arrow">↓</div>
+          <div class="pipe-row">
+            <span class="pipe-node">Architecture Mapper</span>
+            <span class="pipe-node">Setup Agent</span>
+            <span class="pipe-node">Codebase Q&amp;A</span>
+            <span class="pipe-node">First-Task Finder</span>
+          </div>
+          <div class="pipe-arrow">↓</div>
+          <div class="pipe-row">
+            <span class="pipe-node file">architecture.json</span>
+            <span class="pipe-node file">setup.json</span>
+            <span class="pipe-node file">qa-context.json</span>
+            <span class="pipe-node file">first-task.json</span>
+          </div>
+          <div class="pipe-arrow">↓</div>
+          <div class="pipe-row"><span class="pipe-node bot">CodeSensei Dashboard</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="architecture">
+      <div class="card">
+        <h3>Module dependency flow</h3>
+        <div class="flow skeleton" id="arch-flow">index.js
+  └─ routes/
+       ├─ api/auth.js ──▶ services/authService.js ──▶ db/users.js
+       ├─ api/expenses.js ──▶ services/expenseService.js ──▶ db/expenses.js
+       └─ api/dashboard.js ──▶ services/aggregationService.js
+  └─ components/
+       ├─ Dashboard.jsx ──▶ hooks/useExpenses.js
+       └─ Charts.jsx</div>
+      </div>
+      <div class="card">
+        <h3>Start here — 5 files a new dev should read first</h3>
+        <ul class="filelist skeleton" id="arch-topfiles">
+          <li><code>index.js</code> — app entry point, wires up routes and middleware</li>
+          <li><code>middleware/auth.js</code> — every request's auth check happens here</li>
+          <li><code>services/expenseService.js</code> — core business logic for the main feature</li>
+          <li><code>db/schema.sql</code> — the actual shape of the data, more reliable than the docs</li>
+          <li><code>components/Dashboard.jsx</code> — where most UI work will happen</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Plain-English summary</h3>
+        <p class="skeleton" id="arch-summary" style="font-size:14px;line-height:1.6;">This is a full-stack expense tracker. Requests come into <code>index.js</code>, pass through auth middleware, and hit one of three route groups (auth, expenses, dashboard). Each route delegates to a service file that holds the actual logic, which talks to the database layer. The frontend is a set of React components that call these APIs and render charts. If you're changing behavior, the service files are almost always where the real logic lives — the routes are just thin wrappers.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="setup">
+      <div class="card">
+        <h3>Local setup checklist</h3>
+        <ul class="checklist skeleton" id="setup-checklist">
+          <li><input type="checkbox" checked disabled> Node.js 20+ and pnpm installed</li>
+          <li><input type="checkbox"> Clone repo, run <code>pnpm install</code></li>
+          <li><input type="checkbox"> Copy <code>.env.example</code> to <code>.env</code> — ask your lead for the Plaid sandbox key</li>
+          <li><input type="checkbox"> Run <code>pnpm db:migrate</code> to set up local Postgres</li>
+          <li><input type="checkbox"> Run <code>pnpm dev</code> — app should be live on localhost:3000</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Common failure point</h3>
+        <p class="skeleton" id="setup-failure" style="font-size:14px;">Most first-run failures happen at the migration step because of a missing local Postgres instance. Fix: <code>docker compose up db</code> before running migrations.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="ask">
+      <div class="card">
+        <h3>Ask the codebase anything</h3>
+        <div class="chat" id="chatlog">
+          <div class="msg user">How does the dashboard load real data?</div>
+          <div class="msg bot">On DOMContentLoaded, loadOutputs() makes four parallel fetch() calls for the agent JSON outputs. When an output has _meta.status = ready, its panel is populated with live data; otherwise the existing fallback content remains.
+            <span class="cite">index.html:180-283 · AGENTS.md:9-20</span>
+          </div>
+        </div>
+        <div class="chatinput">
+          <input id="chatin" type="text" placeholder="e.g. how does the loading skeleton work?">
+          <button onclick="sendChat()">Ask</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="task">
+      <div class="card skeleton" id="task-card">
+        <h3>Recommended first task</h3>
+        <div class="task">
+          <span class="badge">Junior-friendly</span><span class="badge">~2 hrs</span>
+          <h4>Fix: category dropdown doesn't reset after adding an expense</h4>
+          <p style="font-size:14px;">Low risk, touches one component (<code>components/Dashboard.jsx</code>), visible impact for users, and a great way to learn the form-state pattern used across the app.</p>
+        </div>
+        <h3 style="margin-top:20px;">Runner-ups</h3>
+        <div class="task">
+          <span class="badge">~3 hrs</span>
+          <h4>Add a loading skeleton to the charts panel</h4>
+        </div>
+        <div class="task">
+          <span class="badge">~1 hr</span>
+          <h4>Write a missing test for expenseService.calculateTotal()</h4>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll('.navbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('active');
+    });
+  });
+
+  // Live answers loaded from output/qa-context.json (null until loaded)
+  let liveAnswers = null;
+
+  function ready(el) { if (el) el.classList.remove('skeleton'); }
+
+  function loadOutputs() {
+    const base = document.currentScript ? '' : '';
+
+    // Status badge tracking
+    const statusResults = [];
+    function trackStatus(promise) {
+      const p = promise.then(d => { statusResults.push(d); return d; });
+      return p;
+    }
+    function updateBadge() {
+      const ready4 = statusResults.filter(d => d && d._meta && d._meta.status === 'ready');
+      const label = document.getElementById('status-label');
+      const dot   = document.querySelector('#status-badge .dot');
+      const ts    = document.getElementById('status-ts');
+      if (!label || !dot || !ts) return;
+      if (ready4.length === 4) {
+        dot.className = 'dot live';
+        label.textContent = 'LIVE ANALYSIS \u00b7 4 Bob subagents';
+        const latest = ready4.map(d => d._meta.generatedAt).filter(Boolean).sort().pop();
+        if (latest) {
+          const d = new Date(latest);
+          ts.textContent = 'Generated ' + d.toLocaleDateString(undefined, {month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString(undefined, {hour:'2-digit',minute:'2-digit'});
+        }
+      } else {
+        dot.className = 'dot demo';
+        label.textContent = 'DEMO FALLBACK';
+        ts.textContent = '';
+      }
+    }
+
+    function fetchJSON(path) {
+      return fetch(path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+    }
+
+    // Fetch all four once; trackStatus pushes each result into statusResults
+    const pArch = trackStatus(fetchJSON('output/architecture.json'));
+    const pSetup = trackStatus(fetchJSON('output/setup.json'));
+    const pQA = trackStatus(fetchJSON('output/qa-context.json'));
+    const pTask = trackStatus(fetchJSON('output/first-task.json'));
+
+    // Badge: update when all four settle
+    Promise.allSettled([pArch, pSetup, pQA, pTask]).then(() => updateBadge());
+
+    // Architecture
+    pArch.then(d => {
+      if (d._meta && d._meta.status === 'ready') {
+        const flow = document.getElementById('arch-flow');
+        if (flow) { flow.textContent = d.dependencyFlow || flow.textContent; ready(flow); }
+
+        const tf = document.getElementById('arch-topfiles');
+        if (tf && d.topFiles && d.topFiles.length) {
+          tf.innerHTML = d.topFiles.map(f =>
+            '<li><code>' + f.path + '</code> \u2014 ' + f.reason + '</li>'
+          ).join('');
+          ready(tf);
+        }
+
+        const sm = document.getElementById('arch-summary');
+        if (sm && d.summary) { sm.textContent = d.summary; ready(sm); }
+      } else {
+        ready(document.getElementById('arch-flow'));
+        ready(document.getElementById('arch-topfiles'));
+        ready(document.getElementById('arch-summary'));
+      }
+    }).catch(() => {
+      ready(document.getElementById('arch-flow'));
+      ready(document.getElementById('arch-topfiles'));
+      ready(document.getElementById('arch-summary'));
+    });
+
+    // Setup
+    pSetup.then(d => {
+      if (d._meta && d._meta.status === 'ready') {
+        const cl = document.getElementById('setup-checklist');
+        if (cl && d.checklist && d.checklist.length) {
+          cl.innerHTML = d.checklist.map(step => {
+            const chk = '<input type="checkbox"' + (step.completedByDefault ? ' checked' : '') + ' disabled> ';
+            return '<li>' + chk + step.label + '</li>';
+          }).join('');
+          ready(cl);
+        }
+
+        const fp = document.getElementById('setup-failure');
+        if (fp && d.failurePoints && d.failurePoints.length) {
+          const p = d.failurePoints[0];
+          fp.innerHTML = p.description + ' Fix: <code>' + p.fix + '</code>';
+          ready(fp);
+        }
+      } else {
+        ready(document.getElementById('setup-checklist'));
+        ready(document.getElementById('setup-failure'));
+      }
+    }).catch(() => {
+      ready(document.getElementById('setup-checklist'));
+      ready(document.getElementById('setup-failure'));
+    });
+
+    // Q&A context
+    pQA.then(d => {
+      if (d._meta && d._meta.status === 'ready' && d.knownAnswers && d.knownAnswers.length) {
+        liveAnswers = d.knownAnswers.map(entry => ({
+          q: new RegExp(entry.question.split(' ').slice(0, 4).join('|'), 'i'),
+          a: entry.answer,
+          cite: entry.citations.map(c => c.file + ':' + c.lineRange).join(' \u00b7 ')
+        }));
+        // Update the Ask panel placeholder text
+        const chatin = document.getElementById('chatin');
+        if (chatin && d.suggestedQuestions && d.suggestedQuestions.length) {
+          chatin.placeholder = d.suggestedQuestions[0];
+        }
+      }
+    }).catch(() => {});
+
+    // First task
+    pTask.then(d => {
+      const card = document.getElementById('task-card');
+      if (!card) return;
+      if (d._meta && d._meta.status === 'ready' && d.primary) {
+        const p = d.primary;
+        const badges = (p.badges || []).map(b => '<span class="badge">' + b + '</span>').join('');
+        const files = (p.files || []).map(f => '<code>' + f + '</code>').join(', ');
+        const runners = (d.runnerUps || []).map(r => {
+          const rb = (r.badges || []).map(b => '<span class="badge">' + b + '</span>').join('');
+          return '<div class="task">' + rb + '<h4>' + r.title + '</h4></div>';
+        }).join('');
+        card.innerHTML =
+          '<h3>Recommended first task</h3>' +
+          '<div class="task">' + badges + '<h4>' + p.title + '</h4>' +
+          '<p style="font-size:14px;">' + p.description +
+          (files ? ' <br><span style="color:var(--muted);font-size:12px;font-family:monospace;">Files: ' + files + '</span>' : '') +
+          '</p></div>' +
+          (runners ? '<h3 style="margin-top:20px;font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Runner-ups</h3>' + runners : '');
+        ready(card);
+      } else {
+        ready(card);
+      }
+    }).catch(() => { ready(document.getElementById('task-card')); });
+  }
+
+  document.addEventListener('DOMContentLoaded', loadOutputs);
+
+  const sampleAnswers = [
+    { q: /categor/i, a: "Expenses are auto-categorized using a keyword-match service against merchant names from the Plaid transaction feed, with a manual override stored per-transaction.", cite: "services/categorizationService.js:22–58" },
+    { q: /test/i, a: "Tests live alongside each service file with a .test.js suffix and run via `pnpm test`, using an in-memory SQLite DB as a fixture.", cite: "services/*.test.js · test/setup.js:1–20" },
+    { q: /deploy/i, a: "Deployment is triggered on merge to main via a GitHub Action that builds, runs migrations, and pushes to the hosting provider.", cite: ".github/workflows/deploy.yml:1–34" }
+  ];
+
+  function sendChat() {
+    const input = document.getElementById('chatin');
+    const val = input.value.trim();
+    if (!val) return;
+    const log = document.getElementById('chatlog');
+    const userMsg = document.createElement('div');
+    userMsg.className = 'msg user';
+    userMsg.textContent = val;
+    log.appendChild(userMsg);
+
+    const match = (liveAnswers || []).concat(sampleAnswers).find(s => s.q.test(val));
+    const botMsg = document.createElement('div');
+    botMsg.className = 'msg bot';
+    if (match) {
+      botMsg.innerHTML = match.a + '<span class="cite">' + match.cite + '</span>';
+    } else {
+      botMsg.innerHTML = liveAnswers
+        ? "No match found in the indexed answers. Try one of the suggested questions above, or ask about the architecture, setup, or agent outputs."
+        : "In the full build, this would query the live codebase via Bob 2.0\u2019s document understanding and return a cited answer. This prototype only has sample answers wired up \u2014 try asking about categorization, tests, or deployment.";
+    }
+    log.appendChild(botMsg);
+    input.value = '';
+    log.scrollTop = log.scrollHeight;
+  }
+
+  document.getElementById('chatin').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendChat();
+  });
+</script>
+
+</body>
+</html>

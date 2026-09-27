@@ -1,0 +1,203 @@
+{
+  "_meta": {
+    "generatedBy": "codebase-qa-agent",
+    "generatedAt": "2025-07-15T14:00:00Z",
+    "repoPath": "codesensei-scaffold",
+    "status": "ready"
+  },
+  "indexedFiles": [
+    {
+      "path": "index.html",
+      "language": "html",
+      "linesOfCode": 323,
+      "summary": "Complete dashboard: CSS (lines 6–51 including .skeleton/@keyframes pulse), 5 HTML panels (lines 53–163), and a <script> block (lines 165–319) with nav wiring, loadOutputs() fetch logic, liveAnswers, sampleAnswers fallback, and sendChat()."
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "linesOfCode": 49,
+      "summary": "Project overview: problem statement, architecture diagram (target build), quick-start command, and what is real vs. stubbed."
+    },
+    {
+      "path": "SUBMISSION.md",
+      "language": "markdown",
+      "linesOfCode": 52,
+      "summary": "lablab.ai submission copy: title, problem/solution narrative, IBM Bob usage statement, tech tags, and media notes."
+    },
+    {
+      "path": "AGENTS.md",
+      "language": "markdown",
+      "linesOfCode": 41,
+      "summary": "Agent guidance: output JSON contracts, _meta.status semantics, agent prompt format, dashboard extension pattern, Q&A answer shape, file path scoping rule."
+    },
+    {
+      "path": "agents/architecture-mapper.md",
+      "language": "markdown",
+      "linesOfCode": 17,
+      "summary": "Bob subagent prompt: crawl repo, identify top-level folders, trace data flow, list 5 key files, output Mermaid diagram and 150-word English summary."
+    },
+    {
+      "path": "agents/setup-agent.md",
+      "language": "markdown",
+      "linesOfCode": 16,
+      "summary": "Bob subagent prompt: read dependency manifests, generate numbered setup checklist with failure points, produce bash script, flag secrets."
+    },
+    {
+      "path": "agents/codebase-qa-agent.md",
+      "language": "markdown",
+      "linesOfCode": 20,
+      "summary": "Bob subagent prompt: answer plain-English questions with file/line citations, detect doc-code mismatches, prefer code over docs when they disagree."
+    },
+    {
+      "path": "agents/first-task-finder.md",
+      "language": "markdown",
+      "linesOfCode": 15,
+      "summary": "Bob subagent prompt: identify 3 low-risk first tasks from issues or git history, estimate difficulty and hours, rank by developer experience level."
+    },
+    {
+      "path": ".bob/rules-agent/AGENTS.md",
+      "language": "markdown",
+      "linesOfCode": 21,
+      "summary": "Coding rules for Agent mode: never embed sample values in output/*.json, respect status field, pre-seed Q&A in knownAnswers not sampleAnswers, keep index.html dependency-free."
+    },
+    {
+      "path": ".bob/rules-ask/AGENTS.md",
+      "language": "markdown",
+      "linesOfCode": 21,
+      "summary": "Context for Ask mode: index.html is the entire app, agents/*.md are prompt specs not scripts, output/*.json hold schemas not live data."
+    },
+    {
+      "path": ".bob/rules-plan/AGENTS.md",
+      "language": "markdown",
+      "linesOfCode": 24,
+      "summary": "Architectural constraints for Plan mode: no server, four agents are independent/parallel, status-driven coordination, dual-phase Q&A lifecycle."
+    },
+    {
+      "path": "output/architecture.json",
+      "language": "json",
+      "linesOfCode": 64,
+      "summary": "Live agent output for the Architecture tab: real dependencyFlow, topFiles, summary, mermaidDiagram, and modules for codesensei-scaffold itself."
+    },
+    {
+      "path": "output/setup.json",
+      "language": "json",
+      "linesOfCode": 62,
+      "summary": "Live agent output for the Setup tab: browser + python3 runtimes, empty secrets array, 4-step checklist, 2 failure points, bash setup script."
+    },
+    {
+      "path": "output/qa-context.json",
+      "language": "json",
+      "linesOfCode": 163,
+      "summary": "Live agent output for the Ask tab: 15 indexed files, knownAnswers with current line citations, suggestedQuestions — this file."
+    },
+    {
+      "path": "output/first-task.json",
+      "language": "json",
+      "linesOfCode": 41,
+      "summary": "Live agent output for the First Task tab: primary task (wire fetch() calls — now complete), two runner-up tasks."
+    }
+  ],
+  "knownAnswers": [
+    {
+      "id": "how-dashboard-loads-data",
+      "question": "How does the dashboard load real data from the agents?",
+      "answer": "On DOMContentLoaded, loadOutputs() (index.html:180–281) fires and issues four parallel fetch() calls to output/architecture.json, output/setup.json, output/qa-context.json, and output/first-task.json. Each promise is independent — a failure in one does not affect the others. If _meta.status === 'ready', the relevant DOM nodes are replaced with live data; otherwise the hardcoded fallback content remains and .skeleton is removed.",
+      "citations": [
+        { "file": "index.html", "lineRange": "180-283" },
+        { "file": "AGENTS.md", "lineRange": "9-20" }
+      ],
+      "docCodeMismatch": false,
+      "mismatchNote": ""
+    },
+    {
+      "id": "skeleton-loading-state",
+      "question": "How does the loading skeleton work?",
+      "answer": "Six content nodes carry class='skeleton' from HTML parse time (lines 85, 96, 106, 113, 123, 144). The .skeleton rule (index.html:49) sets opacity:.45 and a 1.4s pulse animation. The ready(el) helper (line 178) removes the class the instant real data lands — or immediately on any error or non-ready status — so the element snaps to full opacity. The fallback demo content is always visible, just dimmed.",
+      "citations": [
+        { "file": "index.html", "lineRange": "49-50" },
+        { "file": "index.html", "lineRange": "178" },
+        { "file": "index.html", "lineRange": "85-144" }
+      ],
+      "docCodeMismatch": false,
+      "mismatchNote": ""
+    },
+    {
+      "id": "qa-live-vs-sample-answers",
+      "question": "How does the Ask panel decide which answers to show?",
+      "answer": "sendChat() (index.html:291) searches (liveAnswers || []).concat(sampleAnswers) in order (line 301). liveAnswers is populated from output/qa-context.json#knownAnswers at load time (lines 244–248) by building a RegExp from the first four words of each question. If liveAnswers loaded successfully, the no-match message says 'No match found in the indexed answers'; if the JSON never loaded, it says 'This prototype only has sample answers wired up'.",
+      "citations": [
+        { "file": "index.html", "lineRange": "241-255" },
+        { "file": "index.html", "lineRange": "301" },
+        { "file": "index.html", "lineRange": "307-309" }
+      ],
+      "docCodeMismatch": false,
+      "mismatchNote": ""
+    },
+    {
+      "id": "fallback-behaviour",
+      "question": "What happens if a JSON file is missing, fails to load, or has status !== 'ready'?",
+      "answer": "Each fetchJSON() call has a .catch() handler that calls ready() on all affected nodes, removing .skeleton and leaving the original hardcoded HTML content fully visible. A non-ready status value hits the else branch of the same if/else (e.g. index.html:203–207 for architecture), which also just calls ready() without touching the DOM content. The dashboard is never blank.",
+      "citations": [
+        { "file": "index.html", "lineRange": "203-212" },
+        { "file": "index.html", "lineRange": "232-239" },
+        { "file": "index.html", "lineRange": "277-280" }
+      ],
+      "docCodeMismatch": false,
+      "mismatchNote": ""
+    },
+    {
+      "id": "how-nav-works",
+      "question": "How does the panel navigation work?",
+      "answer": "Navigation is purely attribute-driven. The script at index.html:166–173 adds a click listener to every .navbtn element. On click it removes .active from all nav buttons and all .panel divs, then adds .active to the clicked button and to document.getElementById(btn.dataset.panel). No panel IDs are hardcoded in JS — adding a new panel only requires a matching data-panel attribute on the button and an id on the div.",
+      "citations": [
+        { "file": "index.html", "lineRange": "62-67" },
+        { "file": "index.html", "lineRange": "166-173" },
+        { "file": "AGENTS.md", "lineRange": "26-31" }
+      ],
+      "docCodeMismatch": false,
+      "mismatchNote": ""
+    },
+    {
+      "id": "next-js-tag-mismatch",
+      "question": "Does CodeSensei use Next.js?",
+      "answer": "No. CodeSensei is a zero-dependency single HTML file with no framework, no npm, and no build step. The 'Next.js' tag in SUBMISSION.md:44 refers to technology a target repo might use, not to CodeSensei itself. There is no package.json anywhere in this project.",
+      "citations": [
+        { "file": "SUBMISSION.md", "lineRange": "44" },
+        { "file": "AGENTS.md", "lineRange": "6-7" },
+        { "file": "index.html", "lineRange": "1-5" }
+      ],
+      "docCodeMismatch": true,
+      "mismatchNote": "SUBMISSION.md:44 lists 'Next.js' as a tag but CodeSensei has no Next.js dependency — misleading in the submission copy."
+    },
+    {
+      "id": "add-new-panel",
+      "question": "How do I add a new panel to the dashboard?",
+      "answer": "Three changes: (1) Add <button class='navbtn' data-panel='<id>'> in the <nav> block (index.html:62–67). (2) Add <div class='panel' id='<id>'> in <main>. (3) Create a new agents/<name>.md prompt spec and output/<name>.json contract. The nav JS is purely attribute-driven — no other JS wiring needed. See AGENTS.md:26–31 for the canonical rule.",
+      "citations": [
+        { "file": "index.html", "lineRange": "62-67" },
+        { "file": "index.html", "lineRange": "166-173" },
+        { "file": "AGENTS.md", "lineRange": "26-31" }
+      ],
+      "docCodeMismatch": false,
+      "mismatchNote": ""
+    },
+    {
+      "id": "what-is-codesensei",
+      "question": "What is CodeSensei and what problem does it solve?",
+      "answer": "CodeSensei is an AI onboarding copilot that turns an undocumented codebase into a guided first week. It runs four IBM Bob 2.0 subagents in parallel (Architecture Mapper, Setup Agent, Codebase Q&A, First-Task Finder) against a target repo and displays results in a single static HTML dashboard. The goal: compress a 3–6 month ramp-up to days.",
+      "citations": [
+        { "file": "README.md", "lineRange": "1-8" },
+        { "file": "index.html", "lineRange": "71-79" }
+      ],
+      "docCodeMismatch": false,
+      "mismatchNote": ""
+    }
+  ],
+  "suggestedQuestions": [
+    "How does the dashboard load real data from the agents?",
+    "How does the loading skeleton work?",
+    "What happens if a JSON output file fails to load?",
+    "How does the Ask panel decide which answers to show?",
+    "How do I add a new panel to the dashboard?"
+  ]
+}
